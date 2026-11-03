@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Desk – Experiment 10 | Firestore User Login</title>
+  <meta name="description" content="Flutter Lab Experiment 10: manual email and password login checked against a users collection (preview uses an in-page copy of the collection)." />
+  <style>
+    :root {
+      --ocean: #0A2F3C; --lagoon: #1F7A8C; --peach: #FF9E7A; --mist: #EAF4F4;
+      --ink: #12313B; --soft: #A9CBD3; --line: #CFE0E3;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--ink);
+      background: #c2dadd; min-height: 100vh; padding: 24px 16px;
+      display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 24px;
+    }
+    .phone { width: 390px; max-width: 100%; height: 800px; background: var(--mist); border: 8px solid #061c24; border-radius: 34px; overflow: hidden; position: relative; box-shadow: 0 24px 60px rgba(10,47,60,.4); }
+    .screen { position: absolute; inset: 0; overflow-y: auto; transition: transform .35s ease, opacity .25s; scrollbar-width: thin; }
+    #dash { transform: translateX(100%); }
+    body.in #dash { transform: none; }
+    body.in #login { transform: translateX(-30%); opacity: 0; }
+
+    /* Login */
+    .hero { background: var(--ocean); color: #fff; padding: 56px 24px 36px; border-radius: 0 0 40px 40px; text-align: center; }
+    .logo { width: 84px; height: 84px; margin: 0 auto 16px; border-radius: 50%; border: 2px solid var(--peach); background: rgba(31,122,140,.35); display: flex; align-items: center; justify-content: center; font-size: 38px; }
+    .hero h1 { font-size: 28px; font-weight: 800; }
+    .hero p { color: var(--soft); margin-top: 6px; font-size: 14px; }
+    form { padding: 28px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+    .field { position: relative; }
+    .field .ico { position: absolute; left: 16px; top: 15px; font-size: 16px; }
+    .field input { width: 100%; padding: 16px 48px 16px 46px; border-radius: 16px; border: 1px solid var(--line); background: #fff; font-size: 15px; color: var(--ink); outline: none; }
+    .field input:focus { border: 2px solid var(--lagoon); padding: 15px 47px 15px 45px; }
+    .field.bad input { border-color: #c1121f; }
+    .field .eye { position: absolute; right: 8px; top: 8px; background: none; border: none; font-size: 18px; cursor: pointer; padding: 6px; }
+    .err { color: #c1121f; font-size: 12px; margin: 4px 0 0 16px; display: none; }
+    .field.bad .err { display: block; }
+    .btn { height: 54px; border: none; border-radius: 16px; background: var(--peach); color: var(--ocean); font-size: 17px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .6; }
+    .spin { width: 22px; height: 22px; border: 3px solid rgba(10,47,60,.25); border-top-color: var(--ocean); border-radius: 50%; animation: r .8s linear infinite; }
+    @keyframes r { to { transform: rotate(360deg); } }
+    .errbox { display: none; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    .errbox.show { display: flex; }
+
+    /* Dashboard */
+    .bar { background: var(--ocean); color: #fff; text-align: center; padding: 22px 12px 14px; font-weight: 700; font-size: 18px; }
+    .dash { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .welcome { background: var(--ocean); color: #fff; border-radius: 28px; padding: 22px; text-align: center; }
+    .av { width: 76px; height: 76px; border-radius: 50%; background: var(--peach); color: var(--ocean); font-size: 32px; font-weight: 900; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+    .welcome h2 { font-size: 24px; font-weight: 800; }
+    .welcome p { color: var(--soft); margin-top: 4px; }
+    .info { background: #fff; border: 1px solid #D8E7E9; border-radius: 24px; padding: 4px 16px 16px; }
+    .tile { display: flex; gap: 14px; align-items: center; background: var(--mist); border-radius: 16px; padding: 14px; margin-top: 12px; }
+    .tile .t { width: 42px; height: 42px; border-radius: 12px; background: var(--lagoon); display: flex; align-items: center; justify-content: center; }
+    .tile small { display: block; color: #6B8A93; font-size: 12px; }
+    .tile b { font-size: 15px; }
+    .logout { margin-top: 16px; height: 54px; }
+
+    /* Mock console */
+    .console { width: 340px; max-width: 100%; background: #061c24; color: #bfe0e6; border-radius: 20px; padding: 18px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+    .console h3 { font-family: system-ui, sans-serif; font-size: 15px; color: var(--peach); margin-bottom: 4px; }
+    .console p { color: #7fa9b2; margin-bottom: 12px; line-height: 1.5; }
+    .console pre { background: #03121a; border-radius: 10px; padding: 10px; white-space: pre-wrap; word-break: break-all; margin-bottom: 10px; }
+    .console .hl { color: var(--peach); }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <!-- Login -->
+    <section class="screen" id="login">
+      <div class="hero">
+        <div class="logo">🛡️</div>
+        <h1>User Login</h1>
+        <p>Sign in with your email and password</p>
+      </div>
+      <form id="form" novalidate>
+        <div class="field" data-f="email"><span class="ico">✉️</span><input id="email" type="email" placeholder="Email" autocomplete="off" /><div class="err"></div></div>
+        <div class="field" data-f="pw"><span class="ico">🔒</span><input id="pw" type="password" placeholder="Password" autocomplete="off" /><button type="button" class="eye" id="eye" title="Show password">👁️</button><div class="err"></div></div>
+        <button class="btn" id="go" type="submit">Login</button>
+        <div class="errbox" id="errbox">⚠️ <span id="errtext"></span></div>
+      </form>
+    </section>
+
+    <!-- Dashboard -->
+    <section class="screen" id="dash">
+      <div class="bar">User Dashboard</div>
+      <div class="dash" id="dashBody"></div>
+    </section>
+  </div>
+
+  <aside class="console">
+    <h3>☁️ users collection (mock)</h3>
+    <p>The app queries <span class="hl">email == entered</span>, then compares the password itself. Hashed values use SHA-256; plain text is also accepted.</p>
+    <pre id="docs">computing…</pre>
+    <p>Demo logins: <span class="hl">yokesh@example.com</span> / <span class="hl">Pass@123</span> (hashed), <span class="hl">priya@example.com</span> / <span class="hl">Pass@123</span> (plain).</p>
+  </aside>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // SHA-256 hex, same format the Dart hashPassword() produces
+  async function sha256(text) {
+    if (!(window.crypto && crypto.subtle)) return null;
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Copy of the Firestore "users" collection used for the demo
+  const users = [
+    { name: 'Yokeshwaran', email: 'yokesh@example.com', phone: '9876543210', password: '' },
+    { name: 'Priya', email: 'priya@example.com', phone: '9123456780', password: 'Pass@123' },
+  ];
+
+  function showDocs() {
+    $('docs').innerHTML = users.map(u => `{ name: "${esc(u.name)}",\n  email: "${esc(u.email)}",\n  phone: "${esc(u.phone)}",\n  password: <span class="hl">"${esc(u.password)}"</span> }`).join('\n\n');
+  }
+  sha256('Pass@123').then(h => { users[0].password = h || 'Pass@123'; showDocs(); });
+
+  // Manual credential check: hash if it looks like a 64-char hex digest, else plain
+  async function check(user, typed) {
+    const stored = user.password;
+    if (/^[0-9a-f]{64}$/i.test(stored)) return (await sha256(typed)) === stored.toLowerCase();
+    return stored === typed;
+  }
+
+  function fieldMsg(name, msg) {
+    const f = document.querySelector(`[data-f="${name}"]`);
+    f.classList.toggle('bad', !!msg); f.querySelector('.err').textContent = msg || '';
+    return !msg;
+  }
+  function showError(t) { $('errtext').textContent = t; $('errbox').classList.add('show'); }
+
+  $('eye').onclick = () => {
+    const show = $('pw').type === 'password';
+    $('pw').type = show ? 'text' : 'password';
+    $('eye').textContent = show ? '🙈' : '👁️';
+    $('eye').title = show ? 'Hide password' : 'Show password';
+  };
+
+  $('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('errbox').classList.remove('show');
+    const email = $('email').value.trim(), pw = $('pw').value;
+    const okE = fieldMsg('email', !email ? 'Please enter your email' : !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? 'Please enter a valid email' : null);
+    const okP = fieldMsg('pw', !pw ? 'Please enter your password' : null);
+    if (!okE || !okP) return;
+
+    $('go').disabled = true; $('go').innerHTML = '<span class="spin"></span>';
+    await new Promise(r => setTimeout(r, 500));       // simulated query round trip
+    const user = users.find(u => u.email === email.toLowerCase());
+    const ok = user && await check(user, pw);
+    $('go').disabled = false; $('go').textContent = 'Login';
+    if (!ok) return showError('Invalid email or password');
+
+    $('dashBody').innerHTML = `
+      <div class="welcome"><div class="av">${esc(user.name[0].toUpperCase())}</div>
+        <h2>Welcome, ${esc(user.name)}</h2><p>You have logged in successfully</p></div>
+      <div class="info">
+        <div class="tile"><div class="t">✉️</div><div><small>Email</small><b>${esc(user.email)}</b></div></div>
+        <div class="tile"><div class="t">📞</div><div><small>Phone</small><b>${esc(user.phone)}</b></div></div>
+      </div>
+      <button class="btn logout" id="logout">↩ Logout</button>`;
+    $('logout').onclick = () => {
+      document.body.classList.remove('in');
+      $('form').reset(); $('eye').textContent = '👁️'; $('pw').type = 'password';
+    };
+    document.body.classList.add('in');
+  });
+</script>
+</body>
+</html>

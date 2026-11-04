@@ -47,8 +47,8 @@ Collection: `users` (added manually in Firebase Console)
 | Field      | Type   | Example                                                            |
 |------------|--------|--------------------------------------------------------------------|
 | (doc ID)   | Auto ID | `aB3dEf...`                                                       |
-| `name`     | string | Yokeshwaran                                                        |
-| `email`    | string | yokesh@example.com (store in **lowercase**)                        |
+| `name`     | string | Abhijith E R                                                        |
+| `email`    | string | abhijith@example.com (store in **lowercase**)                        |
 | `phone`    | string | 9876543210                                                         |
 | `password` | string | SHA-256 hash, e.g. `8776f108e247ab1e2b323042c049c266407c81fbad41bde1e8dfc1bb66fd267e` (= `Test@123`) |
 
@@ -94,7 +94,7 @@ End-to-end test (after `flutter build web`, needs Python + Playwright and a user
 Firebase Console):
 
 ```bash
-set E2E_EMAIL=yokesh@example.com
+set E2E_EMAIL=abhijith@example.com
 set E2E_PASSWORD=Test@123
 python tool/e2e_chrome_test.py screenshots
 ```

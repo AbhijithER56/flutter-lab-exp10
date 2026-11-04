@@ -4,7 +4,7 @@
 //   flutter run -d chrome -t tool/demo_main.dart
 //
 // Demo logins (same data as the widget tests):
-//   yokesh@example.com / Pass@123   (password stored as a SHA-256 hash)
+//   abhijith@example.com / Pass@123   (password stored as a SHA-256 hash)
 //   priya@example.com  / Pass@123   (password stored as plain text)
 
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -18,8 +18,8 @@ Future<void> main() async {
   final db = FakeFirebaseFirestore();
   final users = db.collection('users');
   await users.add({
-    'name': 'Yokeshwaran',
-    'email': 'yokesh@example.com',
+    'name': 'Abhijith E R',
+    'email': 'abhijith@example.com',
     'phone': '9876543210',
     'password': hashPassword('Pass@123'),
   });
